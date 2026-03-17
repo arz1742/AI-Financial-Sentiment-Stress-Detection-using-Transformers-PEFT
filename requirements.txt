@@ -1,0 +1,33 @@
+# Core ML & Data
+numpy
+pandas
+scikit-learn
+matplotlib
+seaborn
+tqdm
+
+# NLP & Text Processing
+nltk
+vaderSentiment
+gensim
+spacy
+
+# Deep Learning & Transformers
+torch
+transformers
+datasets
+accelerate
+peft
+bitsandbytes
+evaluate
+
+# Topic Modeling
+bertopic
+umap-learn
+hdbscan
+
+# Other Utilities
+praw
+python-dotenv
+jupyter
+ipykernel

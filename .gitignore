@@ -1,0 +1,8 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+run_log.txt
+data/
+outputs/finbert_lora/
+.env

@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/Transformers-HuggingFace-yellow.svg" alt="Transformers">
   <img src="https://img.shields.io/badge/Status-Complete-success.svg" alt="Status">
 
-  <h1>Modelin Latent Financial Stress & Emotional Dynamics in Online Discourse</h1>
+  <h1>Modeling Latent Financial Stress & Emotional Dynamics in Online Discourse</h1>
   <p>A Constraint-Optimized NLP Pipeline utilizing PEFT/LoRA, FinBERT, and BERTopic</p>
 </div>
 

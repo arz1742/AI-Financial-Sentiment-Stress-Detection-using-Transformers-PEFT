@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from src.data.dataset_manager import DatasetManager
 from src.models.baselines import run_vader_baseline, run_lda_baseline, display_lda_topics
 from src.models.lora_finetune import FinBERTTrainer
+from src.models.roberta_finetune import RobertaTrainer
 from src.models.topic_modeling import run_bertopic_clustering
 from src.evaluation.metrics import (
     compute_all_metrics,
@@ -119,6 +120,17 @@ def run_pipeline():
     finbert_metrics = compute_all_metrics(fin_y_true_mapped, fin_preds, fin_probs, fin_label_names)
     finbert_metrics["inference_time_s"] = "N/A"
 
+    logger.info("\n── PHASE 3b: Roberta LoRA Fine-Tuning ───────────────────────")
+    roberta = RobertaTrainer(num_labels=3, lora_r=8, lora_alpha=32, max_length=128)
+    roberta.train(fin_train, fin_val, output_dir=os.path.join(OUTPUTS, "roberta_lora"), epochs=3)
+
+    logger.info("\n── PHASE 3b: Roberta Inference on Financial Test Set ────────")
+    rob_preds, rob_probs, rob_pred_labels = roberta.predict(fin_test_texts)
+    rob_label_names = list(roberta.label2id.keys())
+    rob_y_true_mapped = [roberta.label2id.get(lbl, 0) for lbl in fin_test["label_text"].tolist()]
+    roberta_metrics = compute_all_metrics(rob_y_true_mapped, rob_preds, rob_probs, rob_label_names)
+    roberta_metrics["inference_time_s"] = "N/A"
+
     logger.info("\n── PHASE 4: BERTopic ────────────────────────────────────────")
     topic_model, topic_info = run_bertopic_clustering(texts_full[:3000])
     if topic_info is not None:
@@ -130,6 +142,7 @@ def run_pipeline():
     all_model_metrics = {
         "VADER (baseline)": vader_metrics,
         "FinBERT-LoRA":     finbert_metrics,
+        "Roberta-LoRA":     roberta_metrics,
     }
     report_df = generate_comparative_report(all_model_metrics)
     report_df.to_csv(os.path.join(OUTPUTS, "metrics_summary.csv"), index=False)
@@ -145,12 +158,19 @@ def run_pipeline():
     plot_confusion_matrix(fin_y_true_mapped, fin_preds, fin_label_names, os.path.join(OUTPUTS, "confusion_matrix_finbert.png"))
     logger.info("Saved: confusion_matrix_finbert.png")
 
+    plot_confusion_matrix(rob_y_true_mapped, rob_preds, rob_label_names, os.path.join(OUTPUTS, "confusion_matrix_roberta.png"))
+    logger.info("Saved: confusion_matrix_roberta.png")
+
     plot_confusion_matrix(fin_y_true_vader, vader_preds, VADER_LABELS, os.path.join(OUTPUTS, "confusion_matrix_vader.png"))
     logger.info("Saved: confusion_matrix_vader.png")
 
     if fin_probs is not None and fin_probs.shape[1] == len(fin_label_names):
         plot_roc_curves(fin_y_true_mapped, fin_probs, fin_label_names, os.path.join(OUTPUTS, "roc_curves_finbert.png"))
         logger.info("Saved: roc_curves_finbert.png")
+
+    if rob_probs is not None and rob_probs.shape[1] == len(rob_label_names):
+        plot_roc_curves(rob_y_true_mapped, rob_probs, rob_label_names, os.path.join(OUTPUTS, "roc_curves_roberta.png"))
+        logger.info("Saved: roc_curves_roberta.png")
 
     if vader_probs is not None:
         plot_roc_curves(fin_y_true_vader, vader_probs, VADER_LABELS, os.path.join(OUTPUTS, "roc_curves_vader.png"))

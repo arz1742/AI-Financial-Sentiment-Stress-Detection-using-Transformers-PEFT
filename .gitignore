@@ -5,4 +5,5 @@ __pycache__/
 run_log.txt
 data/
 outputs/finbert_lora/
+outputs/roberta_lora/
 .env

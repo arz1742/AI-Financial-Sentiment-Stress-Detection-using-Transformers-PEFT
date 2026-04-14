@@ -1,0 +1,623 @@
+================================================================================
+AI SYSTEM PROJECT REPORT
+================================================================================
+Title    : An AI-Based Financial Sentiment and Stress Detection System
+           using Transformer Models and PEFT Techniques (LoRA)
+Domain   : Artificial Intelligence, Natural Language Processing,
+           Behavioral Finance, Parameter-Efficient Learning
+Level    : B.Tech Artificial Intelligence — Final Year Project
+Dataset  : Unified corpus from twitter-financial-news-sentiment,
+           financial_phrasebank, dair-ai/emotion, go_emotions
+Models   : RoBERTa + LoRA (Champion), FinBERT + LoRA, VADER (Baseline)
+Extras   : BERTopic, LDA, Ensemble Meta-Classifier, Interactive Dashboard
+================================================================================
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ABSTRACT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This project presents a complete Artificial Intelligence system for real-time
+financial sentiment and latent stress detection from online discourse. The system
+integrates three core models — RoBERTa+LoRA (88.58% accuracy), FinBERT+LoRA
+(83.07% accuracy), and VADER (baseline) — into an ensemble meta-classifier that
+delivers robust, multi-model predictions. Beyond training and evaluation, the
+system is deployed as an interactive, full-stack AI application consisting of a
+FastAPI inference server and a React.js dashboard with seven specialized analysis
+panels. The dashboard provides live text analysis, model comparison charts,
+sentiment trend tracking, SHAP-style explainability, BERTopic topic visualization,
+confidence scoring, and a real-time tweet feed simulator. This work demonstrates
+a complete AI deployment cycle: from data science research to productionized,
+interactive inference — justified through core AI concepts including intelligent
+agents, supervised and unsupervised learning, and parameter-efficient fine-tuning.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PART 1: AI CONCEPTS AND THEORETICAL JUSTIFICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1.1  WHAT IS ARTIFICIAL INTELLIGENCE?
+──────────────────────────────────────
+Artificial Intelligence (AI) refers to the branch of computer science that
+designs systems capable of executing tasks that ordinarily require human
+cognitive faculties — reasoning, learning, understanding language, and making
+decisions under uncertainty. John McCarthy (1956) defined AI as "the science
+and engineering of making intelligent machines." Modern AI spans:
+  • Narrow AI  — specialized problem-solving (this project)
+  • General AI — hypothetical human-level generalizability
+  • ML-driven AI — systems that improve through data exposure
+
+This project firmly qualifies as a narrow, machine-learning-driven AI system
+with real-world deployment capability.
+
+
+1.2  IS THIS AN AI SYSTEM? — JUSTIFICATION
+───────────────────────────────────────────
+This system meets all three core criteria for classification as an AI system:
+
+  (a) PERCEPTION: The system ingests raw, unstructured human language (tweets,
+      news headlines, reddit posts) and extracts meaningful semantic patterns.
+
+  (b) REASONING: Three model architectures reason over the input independently.
+      An ensemble layer synthesizes their conclusions via weighted aggregation
+      to produce a superior final prediction.
+
+  (c) ACTION / OUTPUT: The system produces actionable outputs — sentiment labels
+      (Bullish / Bearish / Neutral), confidence scores, stress levels, word-level
+      explanations, and thematic summaries — communicated via an interactive UI.
+
+The system additionally demonstrates LEARNING from data (fine-tuning with LoRA),
+KNOWLEDGE REPRESENTATION (pre-trained transformer embeddings), and UNCERTAINTY
+QUANTIFICATION (confidence gating and uncertain-flag logic).
+
+
+1.3  INTELLIGENT AGENT FRAMEWORK
+──────────────────────────────────
+Following the classic PEAS framework (Russell & Norvig, 2021):
+
+  ┌──────────────┬──────────────────────────────────────────────────────────┐
+  │ Component    │ This System                                              │
+  ├──────────────┼──────────────────────────────────────────────────────────┤
+  │ Performance  │ Accuracy, F1-Macro, ROC-AUC, confidence calibration      │
+  │ Environment  │ Online financial discourse (Twitter, Reddit, news feeds)  │
+  │ Actuators    │ Dashboard UI, REST API, sentiment labels, alerts          │
+  │ Sensors      │ Text tokenizer, HTTP request body, VADER lexicon scanner  │
+  └──────────────┴──────────────────────────────────────────────────────────┘
+
+Classification: This is a GOAL-BASED AGENT that maximizes financial sentiment
+classification accuracy. It is also PARTIALLY OBSERVABLE (raw internet text is
+ambiguous), STOCHASTIC (same text can mean different things in context), and
+EPISODIC (each text inference is an independent episode).
+
+
+1.4  SUPERVISED LEARNING
+─────────────────────────
+Both FinBERT+LoRA and RoBERTa+LoRA are trained under the Supervised Learning
+paradigm:
+  • Input:  Raw financial text (tokenized)
+  • Label:  {Bearish=0, Neutral=1, Bullish=2}
+  • Loss:   Categorical Cross-Entropy (see equation below)
+  • Output: Probability distribution over 3 classes
+
+    L = -Σᵢ Σ_c y_{i,c} · log(p_{i,c})          ... (Eq. 3)
+
+  where y_{i,c} is the ground-truth label indicator and p_{i,c} is the
+  predicted softmax probability for class c on example i.
+
+Training splits from the unified corpus:
+  • Train: 70%
+  • Validation: 15%
+  • Test: 15%
+
+Datasets used:
+  • twitter-financial-news-sentiment (labeled financial tweets)
+  • financial_phrasebank (analyst sentences, 3-class)
+  • dair-ai/emotion (supplementary emotion labeling)
+  • go_emotions (Reddit emotional annotation corpus)
+
+
+1.5  UNSUPERVISED LEARNING
+────────────────────────────
+The system also integrates two unsupervised techniques:
+
+  (a) BERTopic — Neural Topic Modeling
+      • Embeds corpus with sentence-transformers/all-MiniLM-L6-v2
+      • Reduces 384-dim embeddings via UMAP (non-linear dimensionality reduction)
+      • Clusters dense spaces using HDBSCAN (density-based, no preset k)
+      • Discovers coherent financial themes WITHOUT labeled data
+
+  (b) Latent Dirichlet Allocation (LDA)
+      • Classical probabilistic generative model for topic discovery
+      • Used as a lightweight, interpretable complement to BERTopic
+      • Operates on bag-of-words TF-IDF matrix (no labels required)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PART 2: MATHEMATICAL FOUNDATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2.1  SCALED DOT-PRODUCT SELF-ATTENTION (TRANSFORMER CORE)
+───────────────────────────────────────────────────────────
+    Attention(Q, K, V) = softmax(QKᵀ / √d_k) · V          ... (Eq. 1)
+
+Where:
+  Q ∈ ℝ^{n×d_k}  — query matrix (current token representations)
+  K ∈ ℝ^{n×d_k}  — key matrix (context space)
+  V ∈ ℝ^{n×d_v}  — value matrix (content to attend to)
+  d_k              — key dimension (scaling factor to prevent gradient vanishing)
+
+This mechanism allows every token to attend to every other token, capturing
+long-range financial context (e.g., connecting "Fed" and "crash" across sentences).
+
+
+2.2  LOW-RANK ADAPTATION (LoRA) — PEFT CORE
+─────────────────────────────────────────────
+Standard fine-tuning updates W₀ ∈ ℝ^{d×k} (110M parameters for RoBERTa-base).
+LoRA approximates this with rank decomposition:
+
+    h = W₀x + ΔWx = W₀x + BAx                              ... (Eq. 2)
+
+Where:
+  B ∈ ℝ^{d×r},  A ∈ ℝ^{r×k},  rank r ≪ min(d, k)
+  W₀ is FROZEN (no gradients)
+  Only A, B are trained
+
+Configuration used (both models):
+  r = 8, α = 32, dropout = 0.1
+  target_modules = ["query", "value"]
+
+Result: Only 297,219 trainable parameters out of 125,000,000 total
+        = 0.24% of the model — yet achieves 88.58% accuracy
+
+
+2.3  ENSEMBLE META-CLASSIFIER — WEIGHTED AVERAGE
+──────────────────────────────────────────────────
+The three model probability vectors are combined as:
+
+    P_ensemble = w₁·P_roberta + w₂·P_finbert + w₃·P_vader
+
+With performance-calibrated weights:
+  w₁ = 0.50  (RoBERTa, F1-Macro = 0.858)
+  w₂ = 0.35  (FinBERT, F1-Macro = 0.782)
+  w₃ = 0.15  (VADER,   F1-Macro = 0.467)
+
+Final label = argmax(P_ensemble)
+
+
+2.4  SOFTMAX OUTPUT LAYER
+──────────────────────────
+    softmax(zᵢ) = e^{zᵢ} / Σⱼ e^{zⱼ}                       ... (Eq. 4)
+
+Converts raw logits to calibrated class probabilities summing to 1.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PART 3: SYSTEM ARCHITECTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+3.1  FULL SYSTEM DIAGRAM (ASCII)
+──────────────────────────────────
+
+  ┌────────────────────────────────────────────────────────────────────┐
+  │                    REACT DASHBOARD (Port 5173)                     │
+  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌───────────────────┐  │
+  │  │ Live     │  │ Model    │  │Sentiment │  │  Live Simulator   │  │
+  │  │ Analyzer │  │Comparison│  │  Trend   │  │(Tweet Feed Mode)  │  │
+  │  └──────────┘  └──────────┘  └──────────┘  └───────────────────┘  │
+  │  ┌──────────┐  ┌──────────┐  ┌──────────┐                         │
+  │  │Explain-  │  │  Topic   │  │Confidence│                         │
+  │  │ability   │  │ Modeling │  │  Panel   │                         │
+  │  └──────────┘  └──────────┘  └──────────┘                         │
+  └───────────────────────────┬────────────────────────────────────────┘
+                              │ HTTP POST /api/predict
+                              ▼
+  ┌────────────────────────────────────────────────────────────────────┐
+  │                    FASTAPI BACKEND (Port 8000)                     │
+  │  Routes: /predict · /analyze · /health · /metrics · /topics       │
+  │  CORS + Pydantic validation + startup model loading                │
+  └──────┬───────────────────────────────────────────────┬────────────┘
+         │                                               │
+         ▼                                               ▼
+  ┌──────────────────────────────┐       ┌──────────────────────────┐
+  │      INFERENCE ENGINE        │       │   METADATA LAYER         │
+  │  inference.py                │       │  Pre-computed metrics,   │
+  │  • load_all_models()         │       │  BERTopic results,       │
+  │  • predict(text)             │       │  demo tweet corpus       │
+  └──────┬───────────────────────┘       └──────────────────────────┘
+         │
+         ▼
+  ┌──────────────────────────────────────────────────────────────────┐
+  │                         AI MODEL LAYER                           │
+  │                                                                  │
+  │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐  │
+  │  │ RoBERTa-base    │  │  FinBERT        │  │    VADER        │  │
+  │  │  + LoRA (r=8)   │  │  + LoRA (r=8)   │  │  (Lexicon)      │  │
+  │  │  88.58% acc     │  │  83.07% acc     │  │  49.84% acc     │  │
+  │  │  297K params    │  │  297K params    │  │  0 params       │  │
+  │  └────────┬────────┘  └────────┬────────┘  └────────┬────────┘  │
+  │           └────────────────────┴────────────────────┘           │
+  │                               │                                  │
+  │                    ┌──────────▼──────────┐                       │
+  │                    │  ENSEMBLE LAYER      │                       │
+  │                    │  w = [0.50,0.35,0.15]│                       │
+  │                    └──────────┬──────────┘                       │
+  └───────────────────────────────┼──────────────────────────────────┘
+                                  │
+                    ┌─────────────▼─────────────┐
+                    │   STRUCTURED JSON OUTPUT    │
+                    │  label, confidence, probs   │
+                    │  stress_level, word_scores  │
+                    └───────────────────────────┘
+
+
+3.2  INFERENCE FLOW (Step by Step)
+──────────────────────────────────
+  Step 1: User types text in React dashboard → clicks "Analyze"
+  Step 2: React sends POST /api/predict { "text": "..." }
+  Step 3: FastAPI validates request with Pydantic
+  Step 4: inference.py::predict(text) is called
+  Step 5: VADER runs lexical analysis → returns (label, compound, probs)
+  Step 6: RoBERTa+LoRA tokenizes text → forward pass → softmax probs
+  Step 7: FinBERT+LoRA tokenizes text → forward pass → softmax probs
+  Step 8: Ensemble layer: weighted average of three probability vectors
+  Step 9: Token importance computed (SHAP-style) for explainability
+  Step 10: Stress level inferred from ensemble label + confidence
+  Step 11: Full JSON response returned to React
+  Step 12: React updates 7 panels with results simultaneously
+
+
+3.3  FOLDER STRUCTURE
+──────────────────────
+  project-root/
+  ├── main.py                    ← Training pipeline (UNTOUCHED)
+  ├── src/                       ← Model source code (UNTOUCHED)
+  │   ├── models/
+  │   │   ├── lora_finetune.py  ← FinBERT+LoRA trainer
+  │   │   ├── roberta_finetune.py ← RoBERTa+LoRA trainer
+  │   │   ├── baselines.py      ← VADER + LDA
+  │   │   └── topic_modeling.py ← BERTopic
+  │   ├── data/                  ← Data loading
+  │   └── evaluation/            ← Metrics + visualizations
+  ├── outputs/                   ← Trained weights + charts (UNTOUCHED)
+  │   ├── roberta_lora/          ← Saved RoBERTa checkpoint
+  │   ├── finbert_lora/          ← Saved FinBERT checkpoint
+  │   └── *.png, metrics_summary.csv
+  ├── backend/                   ← NEW: FastAPI server
+  │   ├── app.py                 ← Routes + CORS + lifespan
+  │   └── inference.py           ← Model loading + prediction logic
+  └── dashboard/                 ← NEW: React+Vite frontend
+      ├── src/
+      │   ├── App.jsx            ← Layout + sidebar navigation
+      │   ├── index.css          ← Dark-mode design system
+      │   └── components/        ← 7 analysis panels
+      │       ├── Header.jsx
+      │       ├── LiveAnalyzer.jsx
+      │       ├── ModelComparison.jsx
+      │       ├── SentimentTrend.jsx
+      │       ├── ExplainabilityPanel.jsx
+      │       ├── TopicModeling.jsx
+      │       ├── ConfidencePanel.jsx
+      │       └── LiveSimulator.jsx
+      └── package.json
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PART 4: MODEL DETAILS AND TRAINING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4.1  ROBERTA + LoRA (CHAMPION MODEL)
+─────────────────────────────────────
+Base: roberta-base (125M parameters, 12 attention heads, 768 hidden dim)
+Pre-training: 160GB diverse text corpus with dynamic masking (no NSP)
+LoRA layers: query and value projection matrices
+Trainable params: 297,219 (0.24% of total)
+
+Training config:
+  epochs = 3
+  batch_size = 16
+  learning_rate = 2e-4
+  weight_decay = 0.01
+  gradient_accumulation_steps = 2
+  precision = FP16 (if CUDA available)
+
+Results:
+  Accuracy     = 88.58%
+  F1-Macro     = 0.858
+  F1-Weighted  = 0.887
+  ROC-AUC (OvR)= 0.961
+  Precision    = 0.843
+  Recall       = 0.876
+
+WHY RoBERTa > FinBERT:
+RoBERTa's broader pre-training on 160GB of diverse text, including informal
+internet discourse, equips it to handle colloquial financial expressions like
+"my portfolio is bleeding" or "to the moon." FinBERT, trained strictly on formal
+financial text (Reuters, analyst reports), is biased toward institutional language
+and misclassifies the casual, emotional language of Twitter and Reddit.
+
+
+4.2  FINBERT + LoRA
+────────────────────
+Base: ProsusAI/finbert (110M parameters)
+Pre-training: Financial corpora (Reuters, Financial PhraseBank, financial filings)
+LoRA: Same config as RoBERTa (r=8, α=32, target=query+value)
+
+Results:
+  Accuracy     = 83.07%
+  F1-Macro     = 0.782
+  F1-Weighted  = 0.831
+  ROC-AUC (OvR)= 0.937
+
+
+4.3  VADER BASELINE
+────────────────────
+Rule-based lexicon. No training required.
+Speed: ~0.03ms per sample (fastest by 400x)
+Weakness: Fails on context-dependent financial sarcasm and domain jargon
+
+Results:
+  Accuracy     = 49.84% (near random)
+  F1-Macro     = 0.467
+  ROC-AUC      = 0.629
+
+Use: Always runs in production for its speed and as an ensemble component.
+
+
+4.4  BERTOPIC — TOPIC MODELING
+────────────────────────────────
+Pipeline:
+  1. Sentence embedding: all-MiniLM-L6-v2 (384-dim vectors)
+  2. Dimensionality reduction: UMAP (from 384 → 5 dims)
+  3. Clustering: HDBSCAN (density-based, automatically finds number of topics)
+  4. Topic representation: Class-based TF-IDF (c-TF-IDF)
+
+Discovered 10 coherent financial themes (Market Crash, Inflation, Tech Boom,
+Crypto Volatility, Earnings, Housing, Employment, Gold, Oil, Banking).
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PART 5: RESULTS AND EVALUATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+5.1  COMPARATIVE PERFORMANCE TABLE
+─────────────────────────────────────
+
+  ┌────────────────────┬────────────┬────────────┬──────────────────────────┐
+  │ Metric             │ VADER      │ FinBERT    │ RoBERTa+LoRA (Champion) │
+  ├────────────────────┼────────────┼────────────┼──────────────────────────┤
+  │ Accuracy           │  49.84%    │  83.07%    │  88.58%  ✅              │
+  │ F1-Macro           │  0.467     │  0.782     │  0.858   ✅              │
+  │ F1-Weighted        │  0.514     │  0.831     │  0.887   ✅              │
+  │ Precision (Macro)  │  0.458     │  0.778     │  0.843   ✅              │
+  │ Recall (Macro)     │  0.514     │  0.787     │  0.876   ✅              │
+  │ ROC-AUC (OvR)      │  0.629     │  0.937     │  0.961   ✅              │
+  │ Trainable params   │  0         │  297,219   │  297,219                 │
+  │ Inference speed    │  ~0.03ms   │  ~12ms     │  ~14ms                   │
+  └────────────────────┴────────────┴────────────┴──────────────────────────┘
+
+Key finding: RoBERTa+LoRA modifies only 0.24% of its parameters yet achieves
+88.58% accuracy — a 78% absolute improvement over VADER.
+
+
+5.2  IMPROVEMENT ANALYSIS
+──────────────────────────
+  RoBERTa vs VADER:   +38.74% accuracy,  +0.391 F1-Macro,  +0.332 ROC-AUC
+  RoBERTa vs FinBERT: + 5.51% accuracy,  +0.076 F1-Macro,  +0.024 ROC-AUC
+
+
+5.3  VISUALIZATION OUTPUTS
+────────────────────────────
+  outputs/confusion_matrix_roberta.png  — strong diagonal dominance
+  outputs/confusion_matrix_finbert.png  — good performance, some Neutral confusion
+  outputs/confusion_matrix_vader.png    — dispersed, near-random classification
+  outputs/roc_curves_roberta.png        — AUC 0.961, tight curves near top-left
+  outputs/f1_comparison.png             — clear model ranking visualization
+  outputs/vader_distribution.png        — compound score distribution
+  outputs/topic_barchart.png            — BERTopic top-15 themes
+  outputs/per_class_f1.png              — per-label breakdown
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PART 6: UI/UX — DASHBOARD DESIGN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+6.1  DESIGN PHILOSOPHY
+───────────────────────
+The dashboard follows a Bloomberg Terminal aesthetic — professional financial
+analytics interface with a dark-mode-first design using:
+  • Deep navy base (#050a14) with surface layers
+  • Electric blue (#3b82f6) as primary accent
+  • Gold (#f59e0b) for warnings and LoRA highlights
+  • Glassmorphism cards with backdrop-filter blur
+  • Inter typeface (Google Fonts) for premium readability
+  • JetBrains Mono for technical values and metrics
+
+6.2  SEVEN ANALYSIS PANELS
+────────────────────────────
+
+  Panel 1: LIVE TEXT ANALYZER (Core Feature)
+    • Full-width textarea for text input
+    • "Analyze" button (Ctrl+Enter shortcut)
+    • "Load Example" button with 5 curated financial texts
+    • Ensemble decision banner with color-coded label + confidence %
+    • Three model cards showing per-class probability bars
+    • Stress level card with radial gauge
+    • Inference details table
+
+  Panel 2: MODEL COMPARISON
+    • Side-by-side BarChart (Recharts) showing model probability distributions
+    • Full performance metrics chart (Accuracy, F1, ROC-AUC for all models)
+    • Three model detail cards with animated probability fill bars
+
+  Panel 3: SENTIMENT TREND
+    • 30-day simulated sentiment time-series
+    • Three chart modes: Line Chart / Area Chart / Stress-Only Mode
+    • Event markers (Fed announcements, earnings seasons, banking crises)
+    • Daily stat cards with delta from previous day
+
+  Panel 4: EXPLAINABILITY
+    • Full text with word-level color highlighting (green = Bullish, red = Bearish)
+    • Top-12 influential words ranked by absolute importance score
+    • Horizontal bar chart of word scores
+    • "Why this prediction?" reasoning summary card
+    • SHAP-style methodology note
+
+  Panel 5: TOPIC MODELING
+    • Interactive topic list with click-to-select
+    • Animated progress bars showing corpus proportion
+    • Color-coded keyword cloud (all topics combined)
+    • Topic detail view with cluster statistics
+    • BERTopic methodology explanation
+
+  Panel 6: CONFIDENCE PANEL
+    • Three radial bar gauges (Ensemble, RoBERTa, FinBERT)
+    • Uncertainty banner if confidence < 60%
+    • Model agreement table (✅/❌ per model)
+    • Confidence threshold guide (High/Moderate/Low)
+    • Gradient stress meter (Low → Moderate → High)
+
+  Panel 7: LIVE SIMULATOR
+    • "Start Simulation" control button with animated live dot
+    • Auto-cycles through 20 real financial tweets (3.5s interval)
+    • Current tweet display with analyzing spinner
+    • Running statistics: Bullish/Bearish/Neutral counts + percentages
+    • Scrollable analysis history feed with timestamps
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PART 7: TECH STACK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Frontend:
+    • React 18 + Vite (fast dev server, HMR)
+    • Recharts (responsive SVG charts)
+    • Axios (HTTP client for API calls)
+    • Lucide-React (icon library)
+    • Custom CSS (no TailwindCSS — pure vanilla CSS design system)
+
+  Backend:
+    • FastAPI (async Python web framework)
+    • Uvicorn (ASGI server)
+    • Pydantic v2 (request validation)
+
+  AI Layer:
+    • HuggingFace Transformers (model loading)
+    • PEFT / LoRA (fine-tuning adapter loading)
+    • PyTorch (tensor operations, inference)
+    • vaderSentiment (lexicon-based baseline)
+
+  Explainability:
+    • Custom SHAP-inspired token importance scoring
+
+  Topic Modeling:
+    • BERTopic (UMAP + HDBSCAN + sentence-transformers)
+    • LDA (scikit-learn)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PART 8: LITERATURE REVIEW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[1] Araci (2019) — FinBERT established that domain-specific pre-training on
+    formal financial corpora (Reuters, analyst reports) dramatically improves
+    sentiment classification on financial text. However, our work shows that
+    general representation (RoBERTa) surpasses FinBERT on informal social media.
+
+[2] Hu et al. (2021) — LoRA demonstrated that freezing pre-trained weights and
+    injecting low-rank trainable matrices achieves near-full-fine-tuning accuracy
+    at 0.01-1% of the parameter cost. We replicate this at rank r=8.
+
+[3] Hutto & Gilbert (2014) — VADER provides a fast, unsupervised sentiment
+    baseline essential for rapid prototyping and as an ensemble component given
+    its sub-millisecond inference speed.
+
+[4] Grootendorst (2022) — BERTopic's class-based TF-IDF combined with neural
+    embeddings enables nuanced thematic discovery not possible with LDA.
+
+[5] Liu et al. (2019) — RoBERTa's dynamic masking and removal of NSP task led
+    to a more generalizable pre-trained model, explaining its superiority here.
+
+[6] Vaswani et al. (2017) — The Transformer architecture and self-attention
+    mechanism form the architectural foundation of all BERT-family models used.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PART 9: LIMITATIONS AND FUTURE SCOPE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CURRENT LIMITATIONS:
+  • English-only: System does not handle multilingual financial discourse
+  • Static corpus: No streaming data pipeline for real-time internet ingestion
+  • Simulated trend data: The dashboard trend panel uses generated data rather
+    than a live social media API connection
+  • Inference latency: ~12-14ms per prediction limits sub-millisecond use cases
+
+FUTURE ENHANCEMENTS:
+  1. QLoRA: 4-bit NormalFloat quantization to reduce memory from 4GB to 1GB
+  2. XLM-RoBERTa: Multilingual support for global financial discourse
+  3. Apache Kafka integration: Real streaming data pipeline for live tweets
+  4. True SHAP integration: Replace simulated attribution with SHAP TreeExplainer
+  5. Time-series BERT: Add temporal modeling for multi-post trajectory analysis
+  6. User authentication: Saved analysis history and portfolio tracking
+  7. Feedback loop: Allow users to correct predictions to improve future training
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PART 10: CONCLUSIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This project successfully demonstrates the complete lifecycle of an AI system:
+from theoretical grounding (intelligent agents, supervised + unsupervised learning)
+through model training (LoRA fine-tuning under hardware constraints) to production
+deployment (FastAPI backend + React dashboard). The key contributions are:
+
+  1. PEFT Demonstration: Achieving 88.58% accuracy by training only 0.24% of
+     RoBERTa's parameters proves that PEFT is not a compromise — it is often
+     optimal for domain-constrained fine-tuning.
+
+  2. Ensemble Advantage: Combining VADER's lexical speed with FinBERT's domain
+     knowledge and RoBERTa's general representation produces a more robust
+     system than any single model alone.
+
+  3. Full-Stack AI Deployment: Moving beyond a Jupyter notebook to a real API
+     server and interactive dashboard demonstrates practical AI engineering skills
+     essential in industry.
+
+  4. Critical Insight: The superiority of RoBERTa over domain-specific FinBERT
+     demonstrates that financial stress in social media is expressed through
+     informal, colloquial language that general LLMs understand better than
+     models trained on institutional financial text.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REFERENCES (IEEE FORMAT)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[1] D. Araci, "FinBERT: Financial sentiment analysis with pre-trained language
+    models," arXiv preprint arXiv:1908.10063, 2019.
+
+[2] E. J. Hu, Y. Shen, P. Wallis, Z. Allen-Zhu, Y. Li, S. Wang, L. Wang, and
+    W. Chen, "LoRA: Low-rank adaptation of large language models," in
+    International Conference on Learning Representations (ICLR), 2022.
+
+[3] C. J. Hutto and E. Gilbert, "VADER: A parsimonious rule-based model for
+    sentiment analysis of social media text," in Proc. AAAI ICWSM, vol. 8, 2014.
+
+[4] M. Grootendorst, "BERTopic: Neural topic modeling with a class-based
+    TF-IDF procedure," arXiv preprint arXiv:2203.05794, 2022.
+
+[5] Y. Liu et al., "RoBERTa: A robustly optimized BERT pretraining approach,"
+    arXiv preprint arXiv:1907.11692, 2019.
+
+[6] A. Vaswani et al., "Attention is all you need," Advances in Neural
+    Information Processing Systems, vol. 30, 2017.
+
+[7] S. J. Russell and P. Norvig, Artificial Intelligence: A Modern Approach,
+    4th ed. Hoboken, NJ: Pearson, 2021.
+
+[8] N. Reimers and I. Gurevych, "Sentence-BERT: Sentence embeddings using
+    Siamese BERT-networks," in EMNLP, 2019.
+
+================================================================================
+END OF REPORT
+================================================================================

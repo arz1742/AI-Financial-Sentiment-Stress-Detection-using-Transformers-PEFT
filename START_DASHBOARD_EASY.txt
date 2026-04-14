@@ -1,0 +1,44 @@
+HOW TO START THE DASHBOARD (EASY GUIDE)
+=======================================
+
+To run the dashboard properly, you need to start two things: the Backend (which handles the data) and the Dashboard (which shows the user interface). 
+
+Please open TWO separate terminal windows (Command Prompt or PowerShell) and follow the simple steps below.
+
+---------------------------------------------------------
+TERMINAL 1: START THE BACKEND
+---------------------------------------------------------
+1. Open your first terminal.
+2. Make sure you are in the main project folder.
+3. First, we need to make sure the required packages are installed. Copy and paste this command and press Enter:
+
+venv\Scripts\python.exe -m pip install fastapi uvicorn pydantic vaderSentiment
+
+4. Once that finishes, start the backend by copying and pasting this command and pressing Enter:
+
+venv\Scripts\python.exe -m uvicorn backend.app:app --host 0.0.0.0 --port 8000 --reload
+
+(Leave this terminal open and running in the background)
+
+---------------------------------------------------------
+TERMINAL 2: START THE DASHBOARD
+---------------------------------------------------------
+1. Open your second terminal.
+2. Make sure you are in the main project folder.
+3. First, move into the dashboard folder by typing this command and pressing Enter:
+
+cd dashboard
+
+4. Copy and paste the following command to start the dashboard, and press Enter:
+
+npm run dev
+
+---------------------------------------------------------
+SUCCESS!
+---------------------------------------------------------
+Once both are running, open your web browser and go to:
+http://localhost:5173
+
+If you ever want to stop them, just press CTRL + C in both terminal windows.
+
+(Note: If you prefer a single-click method, you can also just right-click the "start.ps1" file in your project folder and select "Run with PowerShell".)

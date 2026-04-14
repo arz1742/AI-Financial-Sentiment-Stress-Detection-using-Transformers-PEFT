@@ -384,9 +384,3 @@ project-root/
 5. Liu, Y., et al. (2019). RoBERTa: A robustly optimized BERT pretraining approach. *arXiv:1907.11692*.
 6. Vaswani, A., et al. (2017). Attention is all you need. *Advances in Neural Information Processing Systems*, 30.
 7. Reimers, N., & Gurevych, I. (2019). Sentence-BERT: Sentence embeddings using Siamese BERT-networks. *EMNLP 2019*.
-
----
-
-<div align="center">
-<em>B.Tech AI Final-Year Project — end-to-end AI system design from research pipeline to interactive inference application.</em>
-</div>
